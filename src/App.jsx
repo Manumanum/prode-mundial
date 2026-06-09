@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { supabase } from "./supabaseClient";
 
 // Polyfill for window.storage if it does not exist (e.g. running in standard browser/Vite dev server)
 if (typeof window !== "undefined" && !window.storage) {
@@ -630,26 +631,109 @@ export default function App() {
   const [data,setData]=useState(null);
   const [loading,setLoading]=useState(true);
 
-  useEffect(()=>{
-    (async()=>{
+  useEffect(() => {
+    (async () => {
       try {
-        const r=await window.storage.get(STORAGE_KEY,true);
-        if (r) {
-          const parsed=JSON.parse(r.value);
-          const base=initData();
-          if(!parsed.slots) parsed.slots=base.slots;
-          else Object.keys(base.slots).forEach(k=>{if(!parsed.slots[k]) parsed.slots[k]=base.slots[k];});
-          if(!parsed.campeones) parsed.campeones={};
-          setData(parsed);
-        } else setData(initData());
-      } catch(_) { setData(initData()); }
+        // 1. Cargar estado global (resultados, slots, campeones)
+        let globalResultados = {};
+        let globalSlots = initSlots();
+        let globalCampeones = {};
+
+        const { data: globalData, error: globalError } = await supabase
+          .from("global_state")
+          .select("resultados, slots, campeones")
+          .eq("id", 1)
+          .maybeSingle();
+
+        if (!globalError && globalData) {
+          globalResultados = globalData.resultados || {};
+          globalSlots = globalData.slots || initSlots();
+          globalCampeones = globalData.campeones || {};
+        } else if (globalError) {
+          console.error("Error cargando el estado global de Supabase:", globalError);
+        }
+
+        // 2. Cargar todos los pronósticos de los jugadores
+        const { data: predData, error: predError } = await supabase
+          .from("predictions")
+          .select("player_name, predictions_data");
+
+        const allPronosticos = {};
+        if (!predError && predData) {
+          predData.forEach((row) => {
+            allPronosticos[row.player_name] = row.predictions_data || {};
+          });
+        } else if (predError) {
+          console.error("Error cargando los pronósticos de Supabase:", predError);
+        }
+
+        const base = initData();
+        const finalSlots = globalSlots || base.slots;
+        Object.keys(base.slots).forEach((k) => {
+          if (!finalSlots[k]) finalSlots[k] = base.slots[k];
+        });
+
+        setData({
+          pronosticos: allPronosticos,
+          resultados: globalResultados,
+          slots: finalSlots,
+          campeones: globalCampeones,
+        });
+      } catch (err) {
+        console.error("Error en inicialización de datos:", err);
+        setData(initData());
+      }
       setLoading(false);
     })();
-  },[]);
+  }, []);
 
-  async function persist(newData) {
-    setData(newData);
-    try { await window.storage.set(STORAGE_KEY,JSON.stringify(newData),true); } catch(_){}
+  async function handleSaveAdmin(newData) {
+    setData((prev) => ({
+      ...prev,
+      resultados: newData.resultados,
+      slots: newData.slots,
+      campeones: newData.campeones,
+    }));
+
+    try {
+      const { error } = await supabase
+        .from("global_state")
+        .upsert({
+          id: 1,
+          resultados: newData.resultados,
+          slots: newData.slots,
+          campeones: newData.campeones,
+          updated_at: new Date().toISOString(),
+        });
+      if (error) throw error;
+    } catch (err) {
+      console.error("Error al guardar estado de administrador:", err);
+      alert("Error al guardar los cambios en la base de datos.");
+    }
+  }
+
+  async function handleSavePlayer(jugador, prons) {
+    setData((prev) => ({
+      ...prev,
+      pronosticos: {
+        ...prev.pronosticos,
+        [jugador]: prons,
+      },
+    }));
+
+    try {
+      const { error } = await supabase
+        .from("predictions")
+        .upsert({
+          player_name: jugador,
+          predictions_data: prons,
+          updated_at: new Date().toISOString(),
+        });
+      if (error) throw error;
+    } catch (err) {
+      console.error("Error al guardar pronósticos del jugador:", err);
+      alert("Error al guardar tus pronósticos en la base de datos.");
+    }
   }
 
   if (loading) return (
@@ -661,8 +745,8 @@ export default function App() {
   );
 
   if (!sesion) return <Ingreso onEnter={(n,a)=>setSesion({nombre:n,isAdmin:a})}/>;
-  if (sesion.isAdmin) return <VistaAdmin data={data} onSave={async(d)=>persist({...data,...d})} onLogout={()=>setSesion(null)}/>;
+  if (sesion.isAdmin) return <VistaAdmin data={data} onSave={handleSaveAdmin} onLogout={()=>setSesion(null)}/>;
   return <VistaJugador jugador={sesion.nombre} data={data}
-    onSave={async(jugador,prons)=>persist({...data,pronosticos:{...data.pronosticos,[jugador]:prons}})}
+    onSave={handleSavePlayer}
     onLogout={()=>setSesion(null)}/>;
 }
