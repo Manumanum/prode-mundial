@@ -151,45 +151,113 @@ function Ingreso({onEnter}) {
   }
 
   return (
-    <div style={{minHeight:"100vh",background:BG,display:"flex",alignItems:"center",justifyContent:"center",padding:16,position:"relative",overflow:"hidden"}}>
-      <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 70% 50% at 50% -10%, rgba(30,70,30,.3) 0%, transparent 70%)",pointerEvents:"none"}}/>
-      <div style={{position:"relative",width:"100%",maxWidth:400}}>
+    <div style={{
+      minHeight: "100vh",
+      background: BG,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "24px 16px",
+      position: "relative",
+      overflow: "hidden",
+      boxSizing: "border-box"
+    }}>
+      <div style={{
+        position: "absolute",
+        inset: 0,
+        background: "radial-gradient(ellipse 70% 50% at 50% -10%, rgba(30,70,30,.3) 0%, transparent 70%)",
+        pointerEvents: "none"
+      }}/>
+      <div style={{
+        position: "relative",
+        width: "100%",
+        maxWidth: 400,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        boxSizing: "border-box"
+      }}>
         {/* Logo */}
-        <div style={{textAlign:"center",marginBottom:28}}>
-          <div style={{fontSize:60,lineHeight:1}}>⚽</div>
-          <div style={{fontSize:54,fontFamily:"Georgia,serif",fontWeight:900,letterSpacing:8,color:G,textShadow:`0 0 50px ${G}44`,marginTop:6}}>PRODE</div>
-          <div style={{fontSize:20,fontFamily:"Georgia,serif",letterSpacing:6,color:"#2a5a2a",marginTop:2}}>MUNDIAL 2026</div>
-          <div style={{fontSize:11,fontFamily:"monospace",letterSpacing:3,color:"#1e3a1e",marginTop:6}}>Canadá · México · Estados Unidos</div>
+        <div style={{
+          width: "100%",
+          textAlign: "center",
+          marginBottom: 32,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 12
+        }}>
+          <div style={{
+            fontSize: "calc(2.5rem + 2vw)",
+            lineHeight: 1.2,
+            margin: 0
+          }}>⚽</div>
+          <div style={{
+            fontSize: "calc(2rem + 3vw)",
+            fontFamily: "Georgia,serif",
+            fontWeight: 900,
+            letterSpacing: 6,
+            color: G,
+            textShadow: `0 0 50px ${G}44`,
+            lineHeight: 1.1,
+            margin: 0
+          }}>PRODE</div>
+          <div style={{
+            fontSize: "calc(1.1rem + 1vw)",
+            fontFamily: "Georgia,serif",
+            letterSpacing: 4,
+            color: "#2a5a2a",
+            margin: 0
+          }}>MUNDIAL 2026</div>
+          <div style={{
+            fontSize: "calc(0.7rem + 0.5vw)",
+            fontFamily: "monospace",
+            letterSpacing: 2,
+            color: "#4a6a4a",
+            lineHeight: 1.4,
+            margin: 0,
+            padding: "0 8px"
+          }}>Canadá · México · Estados Unidos</div>
         </div>
+        
         {/* Card */}
-        <div style={{background:BG2,border:`1px solid ${BOR}`,borderRadius:12,padding:"22px 20px",
-          outline: err?"1px solid #ef4444":"1px solid transparent",transition:"outline .2s"}}>
+        <div style={{
+          width: "100%",
+          background: BG2,
+          border: `1px solid ${BOR}`,
+          borderRadius: 12,
+          padding: "24px 20px",
+          boxSizing: "border-box",
+          outline: err ? "1px solid #ef4444" : "1px solid transparent",
+          transition: "outline .2s"
+        }}>
           {/* Tabs modo */}
           <div style={{display:"flex",borderRadius:8,overflow:"hidden",border:`1px solid ${BOR}`,marginBottom:16}}>
             {["jugador","admin"].map(m=>(
               <button key={m} onClick={()=>setModo(m)}
-                style={{flex:1,padding:"10px 0",background:modo===m?G:"transparent",border:"none",
+                style={{flex:1,padding:"12px 0",background:modo===m?G:"transparent",border:"none",
                   color:modo===m?"#000":TXT2,fontFamily:"monospace",fontSize:13,letterSpacing:2,cursor:"pointer"}}>
                 {m==="jugador"?"⚽ Jugador":"🔑 Admin"}
               </button>
             ))}
           </div>
           <input style={{width:"100%",background:BG,border:`1px solid ${BOR}`,borderRadius:8,color:TXT,
-            padding:"11px 14px",fontSize:15,fontFamily:"Georgia,serif",marginBottom:12,boxSizing:"border-box",outline:"none"}}
+            padding:"12px 14px",fontSize:15,fontFamily:"Georgia,serif",marginBottom:12,boxSizing:"border-box",outline:"none"}}
             placeholder="Ingresá tu nombre" value={nombre}
             onChange={e=>setNombre(e.target.value)} onKeyDown={e=>e.key==="Enter"&&entrar()} />
           {modo==="admin"&&(
             <input style={{width:"100%",background:BG,border:`1px solid ${BOR}`,borderRadius:8,color:TXT,
-              padding:"11px 14px",fontSize:15,fontFamily:"Georgia,serif",marginBottom:12,boxSizing:"border-box",outline:"none"}}
+              padding:"12px 14px",fontSize:15,fontFamily:"Georgia,serif",marginBottom:12,boxSizing:"border-box",outline:"none"}}
               type="password" placeholder="PIN de administrador"
               value={pin} onChange={e=>setPin(e.target.value)} onKeyDown={e=>e.key==="Enter"&&entrar()} />
           )}
           <button onClick={entrar} style={{width:"100%",background:`linear-gradient(135deg,${G},${GD})`,color:"#000",
-            border:"none",borderRadius:8,padding:"13px 0",fontSize:16,fontFamily:"Georgia,serif",fontWeight:"bold",
+            border:"none",borderRadius:8,padding:"14px 0",fontSize:16,fontFamily:"Georgia,serif",fontWeight:"bold",
             cursor:"pointer",letterSpacing:1}}>
             {modo==="jugador"?"Ingresar al Prode →":"Entrar como Admin →"}
           </button>
-          {modo==="admin"&&<p style={{color:TXT2,fontSize:12,textAlign:"center",fontFamily:"monospace",margin:"10px 0 0",letterSpacing:1}}>PIN predeterminado: <b>1234</b></p>}
+          {modo==="admin"&&<p style={{color:TXT2,fontSize:12,textAlign:"center",fontFamily:"monospace",margin:"12px 0 0",letterSpacing:1}}>PIN predeterminado: <b>1234</b></p>}
         </div>
       </div>
     </div>
